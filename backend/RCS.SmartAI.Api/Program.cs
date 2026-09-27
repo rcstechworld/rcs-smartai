@@ -1,3 +1,6 @@
+using RCS.SmartAI.Application.Businesses.Repositories;
+using RCS.SmartAI.Infrastructure.GoogleSheets;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -13,7 +16,8 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
-
+builder.Services.AddSingleton<IBusinessBrainRepository,
+    GoogleSheetsBusinessBrainRepository>();
 var app = builder.Build();
 
 app.UseCors("Frontend");

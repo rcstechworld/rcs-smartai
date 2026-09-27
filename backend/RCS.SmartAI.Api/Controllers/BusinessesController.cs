@@ -1,40 +1,50 @@
 using Microsoft.AspNetCore.Mvc;
 using RCS.SmartAI.Application.Businesses;
 using RCS.SmartAI.Application.Businesses.Dtos;
+using RCS.SmartAI.Application.Businesses.Repositories;
 
 namespace RCS.SmartAI.Api.Controllers;
 
 [ApiController]
-[Route("api/businesses")]
+[Route("api/[controller]")]
 public class BusinessesController : ControllerBase
 {
-    private static readonly Dictionary<Guid, BusinessBrain> Businesses = new();
+    private readonly IBusinessBrainRepository _repository;
+
+    public BusinessesController(IBusinessBrainRepository repository)
+    {
+        _repository = repository;
+    }
 
     [HttpPost]
-    public ActionResult<BusinessBrain> Create(CreateBusinessBrainRequest request)
+    public async Task<ActionResult<BusinessBrain>> Create(
+        CreateBusinessBrainRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.BusinessName))
         {
-            return BadRequest("Business name is required.");
+            return BadRequest("BusinessName is required.");
         }
 
         if (string.IsNullOrWhiteSpace(request.Category))
         {
-            return BadRequest("Business category is required.");
+            return BadRequest("Category is required.");
         }
 
         if (string.IsNullOrWhiteSpace(request.Location))
         {
-            return BadRequest("Business location is required.");
+            return BadRequest("Location is required.");
         }
 
         if (!request.TermsPrivacyConsent)
         {
-            return BadRequest("Terms and Privacy consent is required.");
+            return BadRequest("TermsPrivacyConsent is required.");
         }
+
+        var now = DateTime.UtcNow;
 
         var business = new BusinessBrain
         {
+            Id = Guid.NewGuid(),
             UserId = request.UserId,
             BusinessName = request.BusinessName,
             Category = request.Category,
@@ -52,23 +62,26 @@ public class BusinessesController : ControllerBase
             AiSuggestionsConsent = request.AiSuggestionsConsent,
             HumanApprovalBeforePublishing =
                 request.HumanApprovalBeforePublishing,
-            ConsentAtUtc = DateTime.UtcNow,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
+            ConsentVersion = "v1",
+            ConsentAtUtc = now,
+            CreatedAtUtc = now,
+            UpdatedAtUtc = now
         };
 
-        Businesses[business.Id] = business;
+        var created = await _repository.CreateAsync(business);
 
         return CreatedAtAction(
             nameof(Get),
-            new { id = business.Id },
-            business);
+            new { id = created.Id },
+            created);
     }
 
     [HttpGet("{id:guid}")]
-    public ActionResult<BusinessBrain> Get(Guid id)
+    public async Task<ActionResult<BusinessBrain>> Get(Guid id)
     {
-        if (!Businesses.TryGetValue(id, out var business))
+        var business = await _repository.GetAsync(id);
+
+        if (business is null)
         {
             return NotFound();
         }
@@ -77,11 +90,33 @@ public class BusinessesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    public ActionResult<BusinessBrain> Update(
+    public async Task<ActionResult<BusinessBrain>> Update(
         Guid id,
         CreateBusinessBrainRequest request)
     {
-        if (!Businesses.TryGetValue(id, out var business))
+        if (string.IsNullOrWhiteSpace(request.BusinessName))
+        {
+            return BadRequest("BusinessName is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Category))
+        {
+            return BadRequest("Category is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Location))
+        {
+            return BadRequest("Location is required.");
+        }
+
+        if (!request.TermsPrivacyConsent)
+        {
+            return BadRequest("TermsPrivacyConsent is required.");
+        }
+
+        var business = await _repository.GetAsync(id);
+
+        if (business is null)
         {
             return NotFound();
         }
@@ -104,6 +139,13 @@ public class BusinessesController : ControllerBase
             request.HumanApprovalBeforePublishing;
         business.UpdatedAtUtc = DateTime.UtcNow;
 
-        return Ok(business);
+        var updated = await _repository.UpdateAsync(business);
+
+        if (updated is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(updated);
     }
 }
