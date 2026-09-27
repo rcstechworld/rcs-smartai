@@ -1,0 +1,9 @@
+export default function Home() {
+  return (
+    <main>
+      <h1>RCS SmartAI</h1>
+      <p>Your AI Business Manager</p>
+      <p>Trial MVP — Google Business Profile management with AI.</p>
+    </main>
+  );
+}

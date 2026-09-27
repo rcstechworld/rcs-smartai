@@ -1,0 +1,18 @@
+node_modules/
+.next/
+out/
+dist/
+bin/
+obj/
+.env
+.env.*
+!.env.example
+*.user
+*.suo
+.vscode/
+.idea/
+.DS_Store
+coverage/
+
+# Local plan workspace
+.superpowers/

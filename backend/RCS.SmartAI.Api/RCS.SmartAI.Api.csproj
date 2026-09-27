@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RCS.SmartAI.Application/RCS.SmartAI.Application.csproj" />
+    <ProjectReference Include="../RCS.SmartAI.Infrastructure/RCS.SmartAI.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
